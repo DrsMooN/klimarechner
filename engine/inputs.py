@@ -231,6 +231,7 @@ class Kuehlannahmen(_Basis):
     kuehlgrenztemperatur_c: float
     solarfaktor_m2: float = Field(ge=0)
     interne_lasten_w: float = Field(ge=0)
+    zeitkonstante_solar_h: float = Field(default=0.0, ge=0, le=48)
 
 
 class Carnotannahmen(_Basis):

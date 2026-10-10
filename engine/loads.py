@@ -10,6 +10,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.signal import lfilter
 
 from engine.inputs import Konfiguration
 from engine.weather import STUNDEN_PRO_JAHR
@@ -38,6 +39,14 @@ def heizbedarf_kw(t_aussen_c: np.ndarray, h_w_k: float, heizgrenze_c: float) -> 
     return h_w_k * np.maximum(0.0, heizgrenze_c - t_aussen_c) / 1000.0
 
 
+def verzoegert(reihe: np.ndarray, zeitkonstante_h: float) -> np.ndarray:
+    """Stündliche Reihe durch ein Verzögerungsglied 1. Ordnung (PT1); 0 = unverändert."""
+    if zeitkonstante_h <= 0:
+        return np.asarray(reihe, dtype=float)
+    alpha = 1.0 - np.exp(-1.0 / zeitkonstante_h)
+    return lfilter([alpha], [1.0, alpha - 1.0], reihe, axis=-1)
+
+
 def kuehlbedarf_kw(
     t_aussen_c: np.ndarray,
     einstrahlung_w_m2: np.ndarray,
@@ -46,12 +55,17 @@ def kuehlbedarf_kw(
     kuehlgrenze_c: float,
     solarfaktor_m2: float,
     interne_lasten_w: float,
+    zeitkonstante_solar_h: float = 0.0,
 ) -> np.ndarray:
     """Kühlbedarf der Split-Räume; null unterhalb der Kühlgrenztemperatur.
 
-    ``h_w_k`` ist hier der Wärmeverlustkoeffizient der Split-Räume.
+    ``h_w_k`` ist hier der Wärmeverlustkoeffizient der Split-Räume. Solare
+    Gewinne werden über ein Verzögerungsglied 1. Ordnung mit
+    ``zeitkonstante_solar_h`` geglättet: Bauteile speichern die Mittagssonne
+    und geben sie bis in den Abend ab. Die Jahressumme bleibt erhalten.
     """
-    last_w = h_w_k * (t_aussen_c - t_soll_c) + solarfaktor_m2 * einstrahlung_w_m2 + interne_lasten_w
+    solar_w = verzoegert(solarfaktor_m2 * einstrahlung_w_m2, zeitkonstante_solar_h)
+    last_w = h_w_k * (t_aussen_c - t_soll_c) + solar_w + interne_lasten_w
     return np.where(t_aussen_c >= kuehlgrenze_c, np.maximum(0.0, last_w) / 1000.0, 0.0)
 
 

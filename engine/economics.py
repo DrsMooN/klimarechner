@@ -89,9 +89,14 @@ def jahreskosten(
     )
 
 
-def kuehlkosten(summen: Jahressummen, strompreis):
-    """Netzstromkosten des Kühlens (Kühlstrom anteilig am Netzbezug je Stunde)."""
-    return summen.kuehlstrom_netz * strompreis
+def kuehlkosten(summen: Jahressummen, strompreis, einspeiseverguetung):
+    """Stromkosten des Kühlens.
+
+    Kühlstrom aus dem Netz kostet den Bezugspreis, Kühlstrom aus PV oder
+    Speicher die entgangene Einspeisevergütung.
+    """
+    aus_pv = summen.split_strom_kuehlen - summen.kuehlstrom_netz
+    return summen.kuehlstrom_netz * strompreis + aus_pv * einspeiseverguetung
 
 
 def barwert(investition: float, cashflows: np.ndarray, zins: float) -> float:
@@ -202,7 +207,7 @@ def bewerte(
         p = (preise.strom[t], preise.brennstoff[t], preise.einspeisung[t])
         kosten_ref.append(jahreskosten(ref, *p))
         kosten_var.append(jahreskosten(var, *p, wartung=e.kosten.wartung_eur_jahr))
-        kuehl.append(kuehlkosten(var, preise.strom[t]))
+        kuehl.append(kuehlkosten(var, preise.strom[t], preise.einspeisung[t]))
 
     return Wirtschaftlichkeit(
         investition=e.kosten.investition_gesamt_eur,

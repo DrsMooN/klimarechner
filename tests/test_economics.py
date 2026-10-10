@@ -92,9 +92,18 @@ def test_kuehlen_kostet(wetter):
     assert w_mit.kuehlkosten.sum() > 0
     # ohne PV ist der Kühlstrom komplett Netzbezug: Ersparnis sinkt genau um die Kühlkosten
     np.testing.assert_allclose(w_ohne.ersparnis - w_mit.ersparnis, w_mit.kuehlkosten, rtol=1e-9)
-    assert kuehlkosten(mit[0].summen(), 0.35) == pytest.approx(
+    assert kuehlkosten(mit[0].summen(), 0.35, 0.08) == pytest.approx(
         mit[0].split_strom_kuehlen.sum() * 0.35
     )
+
+
+def test_kuehlstrom_aus_pv_kostet_entgangene_einspeisung(wetter):
+    _, _, mit = _faelle({"pv": {"status": "vorhanden"}}, wetter)
+    s = mit[0].summen()
+    assert 0 < s.kuehlstrom_netz < s.split_strom_kuehlen
+    erwartet = s.kuehlstrom_netz * 0.35 + (s.split_strom_kuehlen - s.kuehlstrom_netz) * 0.08
+    assert kuehlkosten(s, 0.35, 0.08) == pytest.approx(erwartet)
+    assert kuehlkosten(s, 0.35, 0.08) > kuehlkosten(s, 0.35, 0.0)
 
 
 def test_hoehere_brennstoffpreise_verbessern_ergebnis(wetter):
