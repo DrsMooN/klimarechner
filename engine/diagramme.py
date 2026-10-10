@@ -1,4 +1,4 @@
-"""Plotly-Diagramme für Oberfläche und PDF-Bericht.
+"""Plotly-Diagramme für die Oberfläche (der PDF-Bericht zeichnet mit Matplotlib).
 
 Benötigt das Extra ``app`` (plotly). Farben: feste Reihenfolge einer
 farbfehlsichtigkeits-geprüften Kategorienpalette; Werte und Beschriftungen

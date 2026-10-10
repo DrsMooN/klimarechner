@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from engine import auswertung, diagramme  # noqa: E402
 from engine.inputs import Konfiguration, lade_defaults, lade_konfiguration  # noqa: E402
 from engine.montecarlo import rechne  # noqa: E402
+from engine.report import erstelle_bericht  # noqa: E402
 from engine.weather import (  # noqa: E402
     PVGISAnfrage,
     PVGISClient,
@@ -346,6 +347,12 @@ def berechne(konfig_json: str, quelle: str, _wetter: list[Wetterjahr]):
     return ergebnis, detail
 
 
+@st.cache_data(show_spinner="Erstelle PDF-Bericht …", max_entries=10)
+def bericht_pdf(konfig_json: str, wetterjahre: tuple[int, ...], _ergebnis, _detail) -> bytes:
+    konfig = Konfiguration.model_validate_json(konfig_json)
+    return erstelle_bericht(konfig, _ergebnis, _detail, len(wetterjahre))
+
+
 def fehlermeldungen(fehler: ValidationError) -> list[str]:
     meldungen = []
     for f in fehler.errors():
@@ -386,6 +393,14 @@ def ergebnisseite(konfig: Konfiguration, ergebnis, detail, wetter: list[Wetterja
         f"Monatsbilanz und Beispielwoche: Wetterjahr {detail.wetterjahr} "
         "(mittlerer Heizbedarf), Eingabewerte ohne Streuung. "
         f"Monte-Carlo: {ergebnis.pfade} Pfade über {len(wetter)} Wetterjahre."
+    )
+
+    st.download_button(
+        "PDF-Bericht herunterladen",
+        bericht_pdf(konfig.model_dump_json(), tuple(w.jahr for w in wetter), ergebnis, detail),
+        file_name="klimarechner-bericht.pdf",
+        mime="application/pdf",
+        type="primary",
     )
 
     with st.expander("Kennzahlen als Tabelle"):
