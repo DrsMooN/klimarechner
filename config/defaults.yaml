@@ -1,0 +1,185 @@
+# Defaults und Szenarien für den Klimarechner.
+#
+# ACHTUNG: Alle Zahlenwerte in dieser Datei sind PLATZHALTER.
+# Sie sind plausibel gewählt, aber nicht fachlich geprüft und müssen vor
+# einer Nutzung im Kundengespräch verifiziert werden (siehe SPEC Abschnitt 3).
+#
+# Aufbau:
+#   eingaben:  alles, was der Installateur in der Maske ändern kann
+#   annahmen:  Tabellen, Szenarien und Modellfaktoren (Bereich "Erweitert")
+
+meta:
+  platzhalter: true
+  stand: "2026-10-10"
+
+eingaben:
+  standort:
+    # Geografische Mitte Deutschlands
+    breitengrad: 51.16
+    laengengrad: 10.45
+
+  gebaeude:
+    beheizte_flaeche_m2: 140
+    split_flaeche_m2: 60
+    baualtersklasse: "1979_1994"
+    t_soll_heizen_c: 21
+    t_soll_kuehlen_c: 25
+    heizgrenztemperatur_c: 15
+
+  geraete:
+    anzahl_innengeraete: 2
+    # Nennleistung je Innengerät
+    nennleistung_heizen_kw: 3.2
+    nennleistung_kuehlen_kw: 2.5
+    scop: 4.6
+    seer: 7.0
+    # Optional: COP an den Prüfpunkten nach EN 14825 (°C -> COP).
+    # Ohne Angabe wird eine Kurve aus dem SCOP abgeleitet.
+    cop_pruefpunkte: null
+    # Optional: EER bei Außentemperatur (°C -> EER). Ohne Angabe aus SEER.
+    eer_pruefpunkte: null
+
+  nutzung:
+    # uebergangszeit | bevorzugt_split | vollheizung_teilraeume
+    heizstrategie: "uebergangszeit"
+    # Bei "uebergangszeit": Split heizt nur oberhalb dieser Außentemperatur
+    split_schwelltemperatur_c: 5
+    kuehlen_aktiv: true
+
+  pv:
+    # keine | vorhanden | neu
+    status: "vorhanden"
+    leistung_kwp: 8.0
+    # PVGIS-Konvention: 0 = Süd, -90 = Ost, 90 = West
+    azimut_grad: 0
+    neigung_grad: 30
+    systemverluste_prozent: 14
+
+  speicher:
+    # keine | vorhanden | neu
+    status: "keine"
+    kapazitaet_kwh: 8.0
+    ladeleistung_kw: 4.0
+    entladeleistung_kw: 4.0
+    # Wirkungsgrad je Richtung (Laden bzw. Entladen)
+    wirkungsgrad: 0.95
+    soc_min: 0.05
+    soc_max: 1.0
+
+  haushalt:
+    jahresverbrauch_kwh: 3500
+
+  bestand:
+    # gas | oel
+    heiztraeger: "gas"
+    kesselwirkungsgrad: 0.90
+
+  preise:
+    strom_bezug_eur_kwh: 0.35
+    # Preis je kWh Endenergie (Gas: bezogen auf Brennwert der Abrechnung)
+    brennstoff_eur_kwh: 0.11
+    einspeiseverguetung_eur_kwh: 0.08
+    # Schlüssel aus annahmen.preisszenarien
+    szenario: "moderat"
+
+  kosten:
+    investition_split_eur: 6000
+    investition_pv_eur: 0
+    investition_speicher_eur: 0
+    wartung_eur_jahr: 150
+
+  rahmen:
+    betrachtungszeitraum_jahre: 15
+    kalkulationszins: 0.03
+
+  montecarlo:
+    pfade: 1000
+    seed: 42
+
+annahmen:
+  # Spezifische Heizlast in W/m² bei Norm-Außentemperatur
+  spezifische_heizlast_w_m2:
+    vor_1949: 150
+    "1949_1978": 130
+    "1979_1994": 100
+    "1995_2009": 70
+    ab_2010: 45
+    effizienzhaus: 30
+
+  # Norm-Außentemperatur für die Umrechnung Heizlast -> H [W/K].
+  # Vereinfachung: ein Wert für alle Standorte.
+  norm_aussentemperatur_c: -12
+
+  kuehlen:
+    # a_solar: effektive Fläche in m², mit der Globalstrahlung [W/m²] zur
+    # Kühllast beiträgt (Fensteranteil/Ausrichtung, konservativ)
+    solarfaktor_m2: 1.0
+    # Interne Lasten in den Split-Räumen
+    interne_lasten_w: 200
+
+  waermepumpe:
+    # Prüfpunkte nach EN 14825 für Heizen
+    pruefpunkte_heizen_c: [-7, 2, 7, 12]
+    # Untere/obere Grenze für extrapolierte COP/EER-Werte
+    cop_min: 1.0
+    cop_max: 8.0
+    # Abtauabschlag auf den COP im Temperaturband um 0 °C
+    abtau_band_c: [-5, 5]
+    abtau_abschlag: 0.10
+    # Pauschaler Teillastabschlag auf COP/EER
+    teillast_abschlag: 0.05
+    # Maximale Heizleistung relativ zur Nennleistung (°C -> Faktor)
+    leistungsfaktor_heizen:
+      -15: 0.70
+      -7: 0.85
+      7: 1.00
+      12: 1.00
+
+  haushalt:
+    # Standardlastprofil (CSV unter data/lastprofile/)
+    lastprofil: "h0"
+    # Multiplikatives Rauschen je Stunde (Standardabweichung, relativ)
+    rauschen_sigma: 0.15
+
+  brennstoffe:
+    # CO2-Emissionsfaktoren in kg/kWh Endenergie
+    co2_kg_kwh:
+      gas: 0.201
+      oel: 0.266
+
+  # Preispfade: korrelierte log-normale Entwicklung je Jahr.
+  # drift = erwartete jährliche Änderung, volatilitaet = Standardabweichung
+  # der jährlichen log-Rendite, korrelation = Strom vs. Brennstoff.
+  preisszenarien:
+    moderat:
+      strom_drift: 0.02
+      strom_volatilitaet: 0.05
+      brennstoff_drift: 0.03
+      brennstoff_volatilitaet: 0.08
+      korrelation: 0.5
+      co2_aufschlag_eur_t: 0
+    steigend:
+      strom_drift: 0.03
+      strom_volatilitaet: 0.05
+      brennstoff_drift: 0.06
+      brennstoff_volatilitaet: 0.10
+      korrelation: 0.5
+      co2_aufschlag_eur_t: 50
+    volatil:
+      strom_drift: 0.02
+      strom_volatilitaet: 0.12
+      brennstoff_drift: 0.03
+      brennstoff_volatilitaet: 0.20
+      korrelation: 0.6
+      co2_aufschlag_eur_t: 0
+
+  # Streuung im Monte-Carlo
+  verhalten:
+    # Standardabweichung der Sollwerte in K
+    sigma_t_soll_k: 0.5
+    # Standardabweichung der Split-Schwelltemperatur in K
+    sigma_schwelle_k: 1.0
+  technik:
+    # COP-Abschlag gleichverteilt zwischen min und max
+    cop_abschlag_min: 0.0
+    cop_abschlag_max: 0.10
