@@ -70,7 +70,7 @@ Alle Größen als NumPy-Arrays der Länge 8.760, vektorisiert über Monte-Carlo-
 ### 4.2 Heizbedarf (vereinfacht)
 
 - Wärmeverlustkoeffizient H [W/K] aus spezifischer Heizlast (Default-Tabelle nach Baualtersklasse) × Fläche, bezogen auf die Differenz Innen- zu Norm-Außentemperatur.
-- Stündlich: `Q_heat(t) = H * max(0, T_soll - T_aussen(t))`, nur wenn `T_aussen(t) < T_heizgrenze`.
+- Stündlich: `Q_heat(t) = H * max(0, T_heizgrenze - T_aussen(t))` (Gradtagzahl-Prinzip; die Differenz zwischen Raumsoll- und Heizgrenztemperatur deckt pauschal solare und interne Gewinne ab). Entscheidung vom 2026-10-10; ursprünglich `H * max(0, T_soll - T_aussen(t))`, was ohne Gewinne rund 300 kWh/m²a ergab.
 - Aufteilung: Anteil der Split-Räume an der Fläche → maximal von Split deckbarer Bedarf. Begrenzung durch die temperaturabhängige maximale Heizleistung der Geräte. Rest übernimmt die Bestandsheizung.
 - Heizstrategie bestimmt, wann Split heizt (z. B. nur oberhalb einer Außentemperaturschwelle).
 

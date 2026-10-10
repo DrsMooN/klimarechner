@@ -227,8 +227,25 @@ class Eingaben(_Basis):
 
 
 class Kuehlannahmen(_Basis):
+    kuehlgrenztemperatur_c: float
     solarfaktor_m2: float = Field(ge=0)
     interne_lasten_w: float = Field(ge=0)
+
+
+class Carnotannahmen(_Basis):
+    kondensation_heizen_c: float
+    verdampfer_abstand_k: float = Field(ge=0)
+    verdampfung_kuehlen_c: float
+    kondensator_abstand_k: float = Field(ge=0)
+
+
+class Referenzklima(_Basis):
+    """Stunden je Temperaturklasse zur Kalibrierung auf SCOP bzw. SEER."""
+
+    auslegungstemperatur_c: float
+    stunden: dict[float, float]
+    heizgrenze_c: float | None = None
+    kuehlgrenze_c: float | None = None
 
 
 class Waermepumpenannahmen(_Basis):
@@ -239,6 +256,9 @@ class Waermepumpenannahmen(_Basis):
     abtau_abschlag: float = Field(ge=0, lt=1)
     teillast_abschlag: float = Field(ge=0, lt=1)
     leistungsfaktor_heizen: dict[float, float]
+    carnot: Carnotannahmen
+    referenzklima_heizen: Referenzklima
+    referenzklima_kuehlen: Referenzklima
 
     @field_validator("leistungsfaktor_heizen")
     @classmethod
@@ -257,6 +277,19 @@ class Waermepumpenannahmen(_Basis):
 class Haushaltsannahmen(_Basis):
     lastprofil: str
     rauschen_sigma: float = Field(ge=0, le=1)
+
+
+class PVGISAnnahmen(_Basis):
+    api_url: str
+    startjahr: int = Field(ge=2005)
+    endjahr: int
+    zeitversatz_h: int = Field(ge=-12, le=12)
+
+    @model_validator(mode="after")
+    def _jahre(self) -> Self:
+        if self.startjahr > self.endjahr:
+            raise ValueError("PVGIS: startjahr darf nicht nach endjahr liegen")
+        return self
 
 
 class Brennstoffannahmen(_Basis):
@@ -294,6 +327,7 @@ class Annahmen(_Basis):
     kuehlen: Kuehlannahmen
     waermepumpe: Waermepumpenannahmen
     haushalt: Haushaltsannahmen
+    pvgis: PVGISAnnahmen
     brennstoffe: Brennstoffannahmen
     preisszenarien: dict[str, Preisszenario]
     verhalten: Verhaltensannahmen
