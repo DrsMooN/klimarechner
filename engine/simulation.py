@@ -38,7 +38,7 @@ from engine.weather import Wetterjahr, lade_wetterjahre, synthetisches_wetterjah
 logger = logging.getLogger(__name__)
 
 
-def _anteil(zaehler, nenner):
+def sicherer_anteil(zaehler, nenner):
     """Sicherer Quotient, 0 bei Nenner 0 (Skalar oder Array)."""
     zaehler, nenner = np.asarray(zaehler, float), np.asarray(nenner, float)
     form = np.broadcast(zaehler, nenner).shape
@@ -95,20 +95,20 @@ class Jahressummen:
 
     @property
     def jaz_heizen(self):
-        return _anteil(self.split_waerme, self.split_strom_heizen)
+        return sicherer_anteil(self.split_waerme, self.split_strom_heizen)
 
     @property
     def pv_anteil_split_heizen(self):
-        return _anteil(self.split_strom_heizen_aus_pv, self.split_strom_heizen)
+        return sicherer_anteil(self.split_strom_heizen_aus_pv, self.split_strom_heizen)
 
     @property
     def eigenverbrauchsquote(self):
-        return _anteil(np.asarray(self.pv) - self.einspeisung, self.pv)
+        return sicherer_anteil(np.asarray(self.pv) - self.einspeisung, self.pv)
 
     @property
     def autarkiegrad(self):
         last = np.asarray(self.last)
-        wert = np.where(last > 0, 1.0 - _anteil(self.netzbezug, last), 0.0)
+        wert = np.where(last > 0, 1.0 - sicherer_anteil(self.netzbezug, last), 0.0)
         return wert if wert.ndim else float(wert)
 
 
@@ -153,7 +153,7 @@ class Jahresergebnis:
         der Stunde zugeordnet.
         """
         b = self.bilanz
-        anteil = _anteil(self.split_strom_heizen, b.last)
+        anteil = sicherer_anteil(self.split_strom_heizen, b.last)
         return {
             "pv": anteil * b.direktverbrauch,
             "speicher": anteil * b.entladung,
@@ -164,7 +164,7 @@ class Jahresergebnis:
         """Jahressummen; bei ``[K, 8760]``-Reihen je Parametersatz."""
         b = self.bilanz
         herkunft = self.herkunft_split_strom_heizen()
-        kuehl_netz = _anteil(self.split_strom_kuehlen, b.last) * b.netzbezug
+        kuehl_netz = sicherer_anteil(self.split_strom_kuehlen, b.last) * b.netzbezug
 
         def s(x):
             summe = np.asarray(x).sum(axis=-1)
@@ -221,7 +221,7 @@ def pruefe_plausibilitaet(konfig: Konfiguration, jaz_heizen: float) -> list[str]
     if jaz_heizen > 0 and not unten <= jaz_heizen <= oben:
         warnungen.append(
             f"JAZ Heizen {jaz_heizen:.2f} liegt außerhalb des plausiblen Bereichs "
-            f"{unten:.1f}–{oben:.1f} für Luft-Luft-Geräte"
+            f"{unten:.1f}–{oben:.1f} für Luft-Luft-Geräte".replace(".", ",")
         )
     for warnung in warnungen:
         logger.warning(warnung)

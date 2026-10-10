@@ -147,4 +147,4 @@ def test_plausibilitaetswarnung(konfig, caplog):
     assert pruefe_plausibilitaet(konfig, 0.0) == []
     warnungen = pruefe_plausibilitaet(konfig, 6.0)
     assert len(warnungen) == 1
-    assert "6.00" in caplog.text
+    assert "6,00" in caplog.text
