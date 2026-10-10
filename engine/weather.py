@@ -131,6 +131,10 @@ class PVGISAnfrage:
         return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
+class PVGISFehler(RuntimeError):
+    """PVGIS hat die Anfrage abgelehnt, z. B. Standort auf dem Meer oder Jahr außerhalb."""
+
+
 class PVGISClient:
     """Ruft PVGIS ab und speichert die Wetterjahre als ``.npz`` im Cache."""
 
@@ -151,7 +155,8 @@ class PVGISClient:
         http = self._http or httpx.Client(timeout=120)
         try:
             antwort = http.get(self.annahmen.api_url, params=anfrage.parameter())
-            antwort.raise_for_status()
+            if antwort.is_error:
+                raise PVGISFehler(f"PVGIS-Abruf fehlgeschlagen: {_fehlertext(antwort)}")
             return antwort.json()
         finally:
             if self._http is None:
@@ -164,6 +169,15 @@ class PVGISClient:
         jahre = parse_pvgis(self._abrufen(anfrage), self.annahmen.zeitversatz_h)
         _speichere_cache(pfad, jahre)
         return jahre
+
+
+def _fehlertext(antwort: httpx.Response) -> str:
+    """Meldung aus der PVGIS-Fehlerantwort (``{"message": ..., "status": ...}``)."""
+    try:
+        meldung = antwort.json().get("message")
+    except ValueError:
+        meldung = None
+    return f"HTTP {antwort.status_code}: {meldung or antwort.text[:200]}"
 
 
 def _speichere_cache(pfad: Path, jahre: list[Wetterjahr]) -> None:

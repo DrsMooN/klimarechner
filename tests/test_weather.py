@@ -1,3 +1,5 @@
+import os
+from dataclasses import replace
 from datetime import datetime, timedelta
 
 import httpx
@@ -9,6 +11,7 @@ from engine.weather import (
     STUNDEN_PRO_JAHR,
     PVGISAnfrage,
     PVGISClient,
+    PVGISFehler,
     Wetterjahr,
     lade_wetterjahre,
     parse_pvgis,
@@ -71,6 +74,40 @@ def test_client_nutzt_cache(tmp_path):
     assert aufrufe[0].url.params["aspect"] == "0.0"
     assert len(list(tmp_path.glob("*.npz"))) == 1
     np.testing.assert_array_equal(erste[0].t_aussen_c, zweite[0].t_aussen_c)
+
+
+def test_client_meldet_pvgis_fehlertext(tmp_path):
+    def handler(anfrage: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            400, json={"message": "Location over the sea. Please, select another location"}
+        )
+
+    konfig = lade_konfiguration()
+    http = httpx.Client(transport=httpx.MockTransport(handler))
+    client = PVGISClient(konfig.annahmen.pvgis, cache_verzeichnis=tmp_path, http=http)
+
+    with pytest.raises(PVGISFehler, match="HTTP 400: Location over the sea"):
+        lade_wetterjahre(konfig, client)
+    assert not list(tmp_path.glob("*.npz"))
+
+
+@pytest.mark.skipif(not os.environ.get("PVGIS_LIVE"), reason="nur mit PVGIS_LIVE=1 (Netzzugriff)")
+def test_pvgis_live(tmp_path):
+    """Echter Abruf für Mitte Deutschland, 1 kWp Süd 30°, ein Jahr."""
+    konfig = lade_konfiguration()
+    anfrage = replace(PVGISAnfrage.aus_konfiguration(konfig), startjahr=2023, endjahr=2023)
+    client = PVGISClient(konfig.annahmen.pvgis, cache_verzeichnis=tmp_path)
+
+    (jahr,) = client.wetterjahre(anfrage)
+
+    assert jahr.jahr == 2023
+    assert 900 < jahr.pv_kw_pro_kwp.sum() < 1250
+    assert 7 < jahr.t_aussen_c.mean() < 12
+    # Ortszeit: PV-Maximum um die Mittagsstunde, Temperaturmaximum am Nachmittag
+    tagesgang_pv = jahr.pv_kw_pro_kwp.reshape(365, 24).mean(axis=0)
+    tagesgang_t = jahr.t_aussen_c.reshape(365, 24).mean(axis=0)
+    assert 11 <= int(np.argmax(tagesgang_pv)) <= 13
+    assert 14 <= int(np.argmax(tagesgang_t)) <= 16
 
 
 def test_cache_schluessel_haengt_von_ausrichtung_ab():
