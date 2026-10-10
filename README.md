@@ -9,7 +9,7 @@ Kernideen:
 - Monte-Carlo über Wetter, Energiepreise und Nutzerverhalten, Ergebnisse als Bandbreiten (P10/P50/P90).
 - Split als Teil- oder Zusatzheizung neben bestehender Gas-/Ölheizung als Standardfall.
 
-Technik: Python 3.12, NumPy/pandas/SciPy, pydantic, Streamlit, Plotly, pytest, ruff.
+Technik: Python 3.12, NumPy/pandas/SciPy, pydantic, Streamlit, Plotly, ReportLab und Matplotlib (PDF), pytest, ruff.
 
 ## Status
 
@@ -40,7 +40,11 @@ Umgesetzt (Schritt 4):
 Umgesetzt (Schritt 5):
 
 - `app/streamlit_app.py`: Eingabemaske mit Defaults und Bereich „Erweitert“ (COP-Prüfpunkte, Praxisabschlag, Monte-Carlo), Ergebnisseite mit Kernaussagen, Kennzahlen, Fächerdiagramm Cashflow, Histogramm Amortisation, Monatsbilanz des Split-Stroms und Beispielwoche.
-- `engine/auswertung.py` (Kernaussagen, Tabellen, repräsentatives Wetterjahr) und `engine/diagramme.py` (Plotly) sind von Streamlit unabhängig und werden auch für den PDF-Bericht genutzt.
+- `engine/auswertung.py` (Kernaussagen, Tabellen, repräsentatives Wetterjahr) und `engine/diagramme.py` (Plotly) sind von Streamlit unabhängig.
+
+Umgesetzt (Schritt 6):
+
+- `engine/report.py`: PDF-Bericht für den Endkunden (A4, zwei Seiten) mit Kernaussagen, Angaben, Kennzahlen als ungünstig/mittel/günstig (P10/P50/P90), kumuliertem Cashflow, Monatsbilanz, Annahmen und Haftungshinweis. Diagramme statisch mit Matplotlib, damit der Export keinen Browser braucht. In der Oberfläche über „PDF-Bericht herunterladen“.
 
 `data/lastprofile/h0_naeherung.csv` ist eine **Näherung**, nicht das offizielle BDEW-H0-Profil (siehe README dort).
 
