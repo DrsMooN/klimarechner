@@ -37,13 +37,19 @@ Umgesetzt (Schritt 4):
 - `engine/montecarlo.py`: Monte-Carlo über Wetterjahre (Ziehen mit Zurücklegen), korrelierte log-normale Strom- und Brennstoffpreise, Verhalten (Sollwerte, Schwelltemperatur) und Technik (COP-Abschlag). Die stündliche Simulation läuft je Wetterjahr einmal für alle Parametersätze gleichzeitig; Preise werden erst danach angewendet. Ergebnis: Barwert, Zinsfuß, Amortisation und Energiekennzahlen als P10/P50/P90 sowie die Wahrscheinlichkeit der Amortisation.
 - Praxisabschlag auf COP/EER (Feld statt Prüfstand) und Plausibilitätswarnung für die JAZ Heizen (Spec Abschnitt 8).
 
+Umgesetzt (Schritt 5):
+
+- `app/streamlit_app.py`: Eingabemaske mit Defaults und Bereich „Erweitert“ (COP-Prüfpunkte, Praxisabschlag, Monte-Carlo), Ergebnisseite mit Kernaussagen, Kennzahlen, Fächerdiagramm Cashflow, Histogramm Amortisation, Monatsbilanz des Split-Stroms und Beispielwoche.
+- `engine/auswertung.py` (Kernaussagen, Tabellen, repräsentatives Wetterjahr) und `engine/diagramme.py` (Plotly) sind von Streamlit unabhängig und werden auch für den PDF-Bericht genutzt.
+
 `data/lastprofile/h0_naeherung.csv` ist eine **Näherung**, nicht das offizielle BDEW-H0-Profil (siehe README dort).
 
 ## Entwicklung
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[dev,app]"
+streamlit run app/streamlit_app.py
 ruff check . && ruff format --check .
 pytest
 ```

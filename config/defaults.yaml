@@ -256,8 +256,9 @@ annahmen:
 
   # Plausibilitätsbereiche; Abweichungen werden als Warnung geloggt
   plausibilitaet:
-    # Realistische Jahresarbeitszahl Heizen für Luft-Luft-Geräte
-    jaz_heizen: [2.5, 4.5]
+    # Realistische Jahresarbeitszahl Heizen für Luft-Luft-Geräte (bei reinem
+    # Übergangszeitbetrieb liegt sie naturgemäß höher als bei Vollheizung)
+    jaz_heizen: [2.5, 5.0]
 
   # Streuung im Monte-Carlo
   verhalten:
