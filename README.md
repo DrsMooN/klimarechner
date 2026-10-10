@@ -28,6 +28,10 @@ Umgesetzt (Schritt 2):
 - `engine/pv_battery.py`: regelbasierter Eigenverbrauch mit Speicher und stündlicher Energiebilanz (vektorisiert über Pfade).
 - `engine/simulation.py`: ein Wetterjahr für Referenz und Variante mit Kennzahlen (JAZ, PV-Anteil am Split-Heizstrom, Brennstoff, Autarkie, Eigenverbrauch).
 
+Umgesetzt (Schritt 3):
+
+- `engine/economics.py`: deterministische Preispfade je Szenario (Drift, CO2-Aufschlag), Jahreskosten für Referenz und Variante, Ersparnis, kumulierter Cashflow, Barwert, interner Zinsfuß, statische und dynamische Amortisation. Kühlen wird als Mehrkosten der Variante gerechnet und separat ausgewiesen.
+
 `data/lastprofile/h0_naeherung.csv` ist eine **Näherung**, nicht das offizielle BDEW-H0-Profil (siehe README dort).
 
 ## Entwicklung
@@ -52,4 +56,5 @@ Jahressimulation mit Default-Eingaben (`--synthetisch` ohne Internetzugang, sons
 
 ```bash
 python -m engine.simulation --synthetisch
+python -m engine.economics --synthetisch
 ```
