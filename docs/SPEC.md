@@ -76,8 +76,9 @@ Alle Größen als NumPy-Arrays der Länge 8.760, vektorisiert über Monte-Carlo-
 
 ### 4.3 Kühlbedarf (vereinfacht)
 
-- `Q_cool(t) = max(0, H * (T_aussen(t) - T_soll_kuehl) + a_solar * G(t) + Q_intern)`, nur in Stunden mit aktivem Kühlen.
-- `a_solar` als einfacher Faktor nach Fensteranteil/Ausrichtung (Default konservativ), interne Lasten als Konstante.
+- `Q_cool(t) = max(0, H * (T_aussen(t) - T_soll_kuehl) + PT1(a_solar * G(t)) + Q_intern)`, nur in Stunden mit aktivem Kühlen.
+- `a_solar` als einfacher Faktor nach Fensteranteil/Ausrichtung (Default 3 m² für 60 m²), interne Lasten als Konstante.
+- `PT1` verzögert die solaren Gewinne mit einer Zeitkonstante (Default 6 h), weil Bauteile die Mittagssonne speichern und abends abgeben. Ohne diese Trägheit fiele die Kühlung fast nur in PV-Stunden.
 
 ### 4.4 Effizienz der Split-Geräte
 
@@ -107,7 +108,7 @@ Immer zwei Fälle mit identischen Wetter- und Preispfaden rechnen:
 - **Referenz**: ohne Split (Heizen komplett über Bestand, kein Kühlen bzw. Kühlen als Komfortgewinn nicht monetarisiert).
 - **Variante**: mit Split (und ggf. neuer PV/Speicher).
 
-Ersparnis = Kosten Referenz − Kosten Variante. Kühlen wird als zusätzliche Stromkosten ausgewiesen, nicht als Ersparnis.
+Ersparnis = Kosten Referenz − Kosten Variante. Kühlen wird als zusätzliche Stromkosten ausgewiesen, nicht als Ersparnis. Kühlstrom aus dem Netz zählt mit dem Bezugspreis, Kühlstrom aus PV oder Speicher mit der entgangenen Einspeisevergütung.
 
 ### 5.2 Kosten je Jahr
 

@@ -265,7 +265,7 @@ def rechne(
         zins=e.rahmen.kalkulationszins,
         preise=preise,
         ersparnis=kosten_ref - kosten_var,
-        kuehlkosten=kuehlkosten(var, preise.strom),
+        kuehlkosten=kuehlkosten(var, preise.strom, preise.einspeisung),
         referenz=_summe_ueber_jahre(ref),
         variante=_summe_ueber_jahre(var),
     )

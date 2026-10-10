@@ -8,6 +8,7 @@ from engine.loads import (
     kuehlbedarf_kw,
     lade_lastprofil,
     normiertes_lastprofil,
+    verzoegert,
     waermeverlustkoeffizient_w_k,
 )
 
@@ -31,6 +32,23 @@ def test_kuehlbedarf():
     )
     # unter Kühlgrenze null; bei 20 °C: -500 + 0 + 200 < 0 -> null
     np.testing.assert_allclose(bedarf, [0.0, 0.0, 1.2, 0.0])
+
+
+def test_verzoegerung_verschiebt_solare_gewinne_in_den_abend():
+    stunde = np.arange(24 * 10)
+    g = np.where((stunde % 24 >= 10) & (stunde % 24 < 15), 800.0, 0.0)
+    glatt = verzoegert(g, zeitkonstante_h=6)
+    np.testing.assert_array_equal(verzoegert(g, 0), g)
+    # Summe bleibt (bis auf den Rest am Ende) erhalten, Abendstunden bekommen Last
+    assert glatt.sum() == pytest.approx(g.sum(), rel=0.02)
+    assert glatt[24 * 5 + 20] > 0
+    assert glatt.max() < g.max()
+
+    t = np.full_like(g, 26.0)
+    ohne = kuehlbedarf_kw(t, g, 100, 25, 20, 1.0, 0)
+    mit = kuehlbedarf_kw(t, g, 100, 25, 20, 1.0, 0, zeitkonstante_solar_h=6)
+    abends = stunde % 24 >= 18
+    assert mit[abends].sum() > ohne[abends].sum()
 
 
 def test_normprofil_summe_und_tagesgang():

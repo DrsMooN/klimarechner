@@ -289,6 +289,7 @@ def simuliere(
                 a.kuehlen.kuehlgrenztemperatur_c,
                 a.kuehlen.solarfaktor_m2,
                 a.kuehlen.interne_lasten_w,
+                a.kuehlen.zeitkonstante_solar_h,
             )
             kuehlwaerme = np.broadcast_to(np.minimum(kuehl, modell.max_kuehlleistung_kw(t)), form)
             strom_kuehlen = kuehlwaerme / modell.eer(t, cop_abschlag)

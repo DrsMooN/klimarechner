@@ -116,11 +116,17 @@ annahmen:
   kuehlen:
     # Gekühlt wird nur in Stunden mit Außentemperatur ab diesem Wert
     kuehlgrenztemperatur_c: 20
-    # a_solar: effektive Fläche in m², mit der Globalstrahlung [W/m²] zur
-    # Kühllast beiträgt (Fensteranteil/Ausrichtung, konservativ)
-    solarfaktor_m2: 1.0
+    # a_solar: effektive Fläche in m², mit der die Einstrahlung auf die
+    # PV-Ebene [W/m²] zur Kühllast beiträgt. Herleitung für 60 m² Split-Fläche:
+    # ca. 12 m² Fenster x g-Wert 0,6 x Rahmenanteil 0,7 x Verschattung 0,9
+    # x Ausrichtung gegenüber der PV-Ebene 0,7 = ca. 3 m²
+    solarfaktor_m2: 3.0
     # Interne Lasten in den Split-Räumen
     interne_lasten_w: 200
+    # Trägheit: Solare Gewinne wirken über Bauteile verzögert (PT1). Damit
+    # fällt ein Teil der Kühlung in den Abend, wenn keine PV mehr läuft.
+    # 0 = keine Verzögerung
+    zeitkonstante_solar_h: 6
 
   waermepumpe:
     # Prüfpunkte nach EN 14825 für Heizen
