@@ -141,7 +141,7 @@ def simuliere_jahr(
     t = wetter.t_aussen_c
 
     h = waermeverlustkoeffizient_w_k(konfig)
-    bedarf = heizbedarf_kw(t, h, e.gebaeude.t_soll_heizen_c, e.gebaeude.heizgrenztemperatur_c)
+    bedarf = heizbedarf_kw(t, h, e.gebaeude.heizgrenztemperatur_c)
 
     null = np.zeros_like(t)
     if mit_split and e.geraete.anzahl_innengeraete > 0:

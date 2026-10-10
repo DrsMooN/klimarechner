@@ -28,12 +28,14 @@ def waermeverlustkoeffizient_w_k(konfig: Konfiguration) -> float:
     return heizlast_w / delta_t
 
 
-def heizbedarf_kw(
-    t_aussen_c: np.ndarray, h_w_k: float, t_soll_c: float, heizgrenze_c: float
-) -> np.ndarray:
-    """Wärmebedarf des ganzen Gebäudes; null ab der Heizgrenztemperatur."""
-    bedarf = h_w_k * np.maximum(0.0, t_soll_c - t_aussen_c) / 1000.0
-    return np.where(t_aussen_c < heizgrenze_c, bedarf, 0.0)
+def heizbedarf_kw(t_aussen_c: np.ndarray, h_w_k: float, heizgrenze_c: float) -> np.ndarray:
+    """Wärmebedarf des ganzen Gebäudes nach dem Gradtagzahl-Prinzip.
+
+    Bezugstemperatur ist die Heizgrenztemperatur, nicht der Raumsollwert:
+    Die Differenz deckt pauschal solare und interne Gewinne ab. Ab der
+    Heizgrenze ist der Bedarf null.
+    """
+    return h_w_k * np.maximum(0.0, heizgrenze_c - t_aussen_c) / 1000.0
 
 
 def kuehlbedarf_kw(

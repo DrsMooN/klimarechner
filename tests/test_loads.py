@@ -17,10 +17,10 @@ def test_waermeverlustkoeffizient(konfig):
     assert waermeverlustkoeffizient_w_k(konfig) == pytest.approx(14000 / 33)
 
 
-def test_heizbedarf_respektiert_heizgrenze():
+def test_heizbedarf_ab_heizgrenze():
     t = np.array([-12.0, 0.0, 14.9, 15.0, 25.0])
-    bedarf = heizbedarf_kw(t, h_w_k=1000, t_soll_c=21, heizgrenze_c=15)
-    np.testing.assert_allclose(bedarf, [33.0, 21.0, 6.1, 0.0, 0.0])
+    bedarf = heizbedarf_kw(t, h_w_k=1000, heizgrenze_c=15)
+    np.testing.assert_allclose(bedarf, [27.0, 15.0, 0.1, 0.0, 0.0])
 
 
 def test_kuehlbedarf():
@@ -56,3 +56,10 @@ def test_haushaltslast_mit_rauschen_haelt_jahressumme(konfig):
     assert mit.sum() == pytest.approx(3500)
     assert (mit >= 0).all()
     assert not np.allclose(ohne, mit)
+
+
+def test_heizbedarf_je_flaeche_plausibel(konfig, wetter):
+    h = waermeverlustkoeffizient_w_k(konfig)
+    je_m2 = heizbedarf_kw(wetter.t_aussen_c, h, 15).sum() / 140
+    # Baujahr 1979–1994, grob 120–220 kWh/m²a Nutzwärme
+    assert 120 < je_m2 < 220
