@@ -20,6 +20,16 @@ Umgesetzt (Schritt 1 der Reihenfolge):
 - `config/defaults.yaml`: alle Defaults, Tabellen und Preisszenarien. Die Zahlenwerte sind **Platzhalter und vor Nutzung zu prüfen**.
 - `engine/inputs.py`: pydantic-Modelle für Eingaben und Annahmen mit Plausibilitätsprüfungen; `lade_konfiguration()` lädt die Defaults und legt Überschreibungen darüber.
 
+Umgesetzt (Schritt 2):
+
+- `engine/weather.py`: PVGIS-Abruf (`seriescalc`, alle Jahre, 1 kWp) mit Dateicache unter `data/cache/pvgis/`, plus synthetisches Wetterjahr für Tests und Offline-Betrieb.
+- `engine/loads.py`: Heizbedarf, Kühlbedarf der Split-Räume, Haushaltsstrom aus Standardlastprofil (BDEW-Verfahren mit Dynamisierung).
+- `engine/heatpump.py`: COP/EER aus Prüfpunkten oder Carnot-Modell, kalibriert auf SCOP/SEER; Abtau- und Teillastabschläge; Leistungsgrenzen.
+- `engine/pv_battery.py`: regelbasierter Eigenverbrauch mit Speicher und stündlicher Energiebilanz (vektorisiert über Pfade).
+- `engine/simulation.py`: ein Wetterjahr für Referenz und Variante mit Kennzahlen (JAZ, PV-Anteil am Split-Heizstrom, Brennstoff, Autarkie, Eigenverbrauch).
+
+`data/lastprofile/h0_naeherung.csv` ist eine **Näherung**, nicht das offizielle BDEW-H0-Profil (siehe README dort).
+
 ## Entwicklung
 
 ```bash
@@ -36,4 +46,10 @@ from engine.inputs import lade_konfiguration
 
 konfig = lade_konfiguration({"eingaben": {"gebaeude": {"split_flaeche_m2": 40}}})
 print(konfig.eingaben.gebaeude.split_anteil, konfig.preisszenario)
+```
+
+Jahressimulation mit Default-Eingaben (`--synthetisch` ohne Internetzugang, sonst PVGIS):
+
+```bash
+python -m engine.simulation --synthetisch
 ```
