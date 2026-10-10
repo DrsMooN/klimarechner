@@ -101,14 +101,18 @@ def haushaltslast_kw(
     jahresverbrauch_kwh: float,
     rng: np.random.Generator | None = None,
     rauschen_sigma: float = 0.0,
+    anzahl: int | None = None,
 ) -> np.ndarray:
     """Haushaltslast, optional mit multiplikativem Rauschen je Stunde.
 
     Das Rauschen ändert nur die Verteilung, die Jahressumme bleibt gleich.
+    Mit ``anzahl`` entstehen ``[anzahl, 8760]`` unabhängig verrauschte Reihen.
     """
     last = normprofil * jahresverbrauch_kwh
+    if anzahl is not None:
+        last = np.tile(last, (anzahl, 1))
     if rng is None or rauschen_sigma == 0 or jahresverbrauch_kwh == 0:
         return last
     faktor = np.maximum(0.0, 1.0 + rng.normal(0.0, rauschen_sigma, size=last.shape))
     verrauscht = last * faktor
-    return verrauscht * (jahresverbrauch_kwh / verrauscht.sum())
+    return verrauscht * (jahresverbrauch_kwh / verrauscht.sum(axis=-1, keepdims=True))

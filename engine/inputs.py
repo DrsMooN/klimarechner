@@ -198,6 +198,7 @@ class Rahmen(_Basis):
 class MonteCarlo(_Basis):
     pfade: int = Field(ge=1, le=100_000)
     seed: int | None = None
+    parametersaetze: int = Field(default=100, ge=1, le=2000)
 
 
 class Eingaben(_Basis):
@@ -255,6 +256,7 @@ class Waermepumpenannahmen(_Basis):
     abtau_band_c: tuple[float, float]
     abtau_abschlag: float = Field(ge=0, lt=1)
     teillast_abschlag: float = Field(ge=0, lt=1)
+    praxisabschlag: float = Field(ge=0, lt=1)
     leistungsfaktor_heizen: dict[float, float]
     carnot: Carnotannahmen
     referenzklima_heizen: Referenzklima
@@ -305,6 +307,16 @@ class Preisszenario(_Basis):
     co2_aufschlag_eur_t: float = Field(ge=0)
 
 
+class Plausibilitaet(_Basis):
+    jaz_heizen: tuple[float, float]
+
+    @model_validator(mode="after")
+    def _bereich(self) -> Self:
+        if self.jaz_heizen[0] >= self.jaz_heizen[1]:
+            raise ValueError("Plausibilitätsbereich JAZ muss aufsteigend sein")
+        return self
+
+
 class Verhaltensannahmen(_Basis):
     sigma_t_soll_k: float = Field(ge=0)
     sigma_schwelle_k: float = Field(ge=0)
@@ -330,6 +342,7 @@ class Annahmen(_Basis):
     pvgis: PVGISAnnahmen
     brennstoffe: Brennstoffannahmen
     preisszenarien: dict[str, Preisszenario]
+    plausibilitaet: Plausibilitaet
     verhalten: Verhaltensannahmen
     technik: Technikannahmen
 

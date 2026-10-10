@@ -32,6 +32,11 @@ Umgesetzt (Schritt 3):
 
 - `engine/economics.py`: deterministische Preispfade je Szenario (Drift, CO2-Aufschlag), Jahreskosten für Referenz und Variante, Ersparnis, kumulierter Cashflow, Barwert, interner Zinsfuß, statische und dynamische Amortisation. Kühlen wird als Mehrkosten der Variante gerechnet und separat ausgewiesen.
 
+Umgesetzt (Schritt 4):
+
+- `engine/montecarlo.py`: Monte-Carlo über Wetterjahre (Ziehen mit Zurücklegen), korrelierte log-normale Strom- und Brennstoffpreise, Verhalten (Sollwerte, Schwelltemperatur) und Technik (COP-Abschlag). Die stündliche Simulation läuft je Wetterjahr einmal für alle Parametersätze gleichzeitig; Preise werden erst danach angewendet. Ergebnis: Barwert, Zinsfuß, Amortisation und Energiekennzahlen als P10/P50/P90 sowie die Wahrscheinlichkeit der Amortisation.
+- Praxisabschlag auf COP/EER (Feld statt Prüfstand) und Plausibilitätswarnung für die JAZ Heizen (Spec Abschnitt 8).
+
 `data/lastprofile/h0_naeherung.csv` ist eine **Näherung**, nicht das offizielle BDEW-H0-Profil (siehe README dort).
 
 ## Entwicklung
@@ -57,4 +62,5 @@ Jahressimulation mit Default-Eingaben (`--synthetisch` ohne Internetzugang, sons
 ```bash
 python -m engine.simulation --synthetisch
 python -m engine.economics --synthetisch
+python -m engine.montecarlo --synthetisch
 ```

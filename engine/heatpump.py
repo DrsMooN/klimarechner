@@ -7,7 +7,8 @@ Saisonzahl über ein Referenzklima dem angegebenen SCOP bzw. SEER entspricht.
 
 Abtau- und Teillastabschläge wirken in beiden Fällen. Beim Carnot-Modell
 sind sie in der Kalibrierung enthalten, die Saisonzahl stimmt also inklusive
-Abschlägen.
+Abschlägen. Der Praxisabschlag (Prüfstand → Feld) wirkt danach zusätzlich
+und ist bewusst nicht in der Kalibrierung enthalten.
 """
 
 from __future__ import annotations
@@ -61,8 +62,11 @@ class Effizienzmodell:
             basis = kennlinie(self.geraete.cop_pruefpunkte, t)
         else:
             basis = self.guetegrad_heizen * self._carnot_cop(t)
-        wert = basis * self._abschlag_heizen(t) * (1.0 - zusatzabschlag)
+        wert = basis * self._abschlag_heizen(t) * self._praxisfaktor(zusatzabschlag)
         return np.clip(wert, self.annahmen.cop_min, self.annahmen.cop_max)
+
+    def _praxisfaktor(self, zusatzabschlag) -> np.ndarray | float:
+        return (1.0 - self.annahmen.praxisabschlag) * (1.0 - zusatzabschlag)
 
     def max_heizleistung_kw(self, t_aussen_c: np.ndarray) -> np.ndarray:
         faktor = self.annahmen.leistungsfaktor_heizen
@@ -85,7 +89,7 @@ class Effizienzmodell:
             basis = kennlinie(self.geraete.eer_pruefpunkte, t)
         else:
             basis = self.guetegrad_kuehlen * self._carnot_eer(t)
-        wert = basis * (1.0 - self.annahmen.teillast_abschlag) * (1.0 - zusatzabschlag)
+        wert = basis * (1.0 - self.annahmen.teillast_abschlag) * self._praxisfaktor(zusatzabschlag)
         return np.clip(wert, self.annahmen.cop_min, self.annahmen.cop_max)
 
     def max_kuehlleistung_kw(self, t_aussen_c: np.ndarray) -> np.ndarray:
@@ -111,6 +115,11 @@ def saisonzahl(werte: np.ndarray, gewichte: np.ndarray) -> float:
 
 
 def erstelle_effizienzmodell(geraete: Geraete, annahmen: Waermepumpenannahmen) -> Effizienzmodell:
+    """Modell mit kalibriertem Gütegrad (ohne Prüfpunkte).
+
+    Kalibriert wird so, dass COP/EER **ohne** Praxisabschlag über das
+    Referenzklima den Datenblattwert SCOP/SEER ergeben.
+    """
     roh = Effizienzmodell(geraete, annahmen, guetegrad_heizen=1.0, guetegrad_kuehlen=1.0)
 
     guetegrad_heizen = None

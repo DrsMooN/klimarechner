@@ -15,18 +15,16 @@ def test_carnot_kalibrierung_trifft_scop(konfig):
     a = konfig.annahmen.waermepumpe
     modell = erstelle_effizienzmodell(konfig.eingaben.geraete, a)
     t, gewichte = _bins(a.referenzklima_heizen, heizen=True)
-    assert saisonzahl(modell.cop(t), gewichte) == pytest.approx(
-        konfig.eingaben.geraete.scop, rel=0.01
-    )
+    erwartet = konfig.eingaben.geraete.scop * (1 - a.praxisabschlag)
+    assert saisonzahl(modell.cop(t), gewichte) == pytest.approx(erwartet, rel=0.01)
 
 
 def test_carnot_kalibrierung_trifft_seer(konfig):
     a = konfig.annahmen.waermepumpe
     modell = erstelle_effizienzmodell(konfig.eingaben.geraete, a)
     t, gewichte = _bins(a.referenzklima_kuehlen, heizen=False)
-    assert saisonzahl(modell.eer(t), gewichte) == pytest.approx(
-        konfig.eingaben.geraete.seer, rel=0.01
-    )
+    erwartet = konfig.eingaben.geraete.seer * (1 - a.praxisabschlag)
+    assert saisonzahl(modell.eer(t), gewichte) == pytest.approx(erwartet, rel=0.01)
 
 
 def test_cop_steigt_mit_aussentemperatur(konfig):
@@ -45,9 +43,10 @@ def test_pruefpunkte_mit_abschlaegen():
     modell = erstelle_effizienzmodell(konfig.eingaben.geraete, a)
     assert modell.guetegrad_heizen is None
     # 7 °C liegt außerhalb des Abtaubands, nur Teillastabschlag
-    assert modell.cop(np.array([7.0]))[0] == pytest.approx(4.5 * (1 - a.teillast_abschlag))
+    praxis = 1 - a.praxisabschlag
+    assert modell.cop(np.array([7.0]))[0] == pytest.approx(4.5 * (1 - a.teillast_abschlag) * praxis)
     # 2 °C im Abtauband
-    erwartet = 3.5 * (1 - a.abtau_abschlag) * (1 - a.teillast_abschlag)
+    erwartet = 3.5 * (1 - a.abtau_abschlag) * (1 - a.teillast_abschlag) * praxis
     assert modell.cop(np.array([2.0]))[0] == pytest.approx(erwartet)
 
 
