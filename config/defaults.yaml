@@ -95,6 +95,9 @@ eingaben:
   montecarlo:
     pfade: 1000
     seed: 42
+    # Anzahl unterschiedlicher Parametersätze (Verhalten/Technik), die je
+    # Wetterjahr stündlich simuliert werden; Pfade ziehen daraus
+    parametersaetze: 100
 
 annahmen:
   # Spezifische Heizlast in W/m² bei Norm-Außentemperatur
@@ -130,6 +133,10 @@ annahmen:
     abtau_abschlag: 0.10
     # Pauschaler Teillastabschlag auf COP/EER
     teillast_abschlag: 0.05
+    # Abschlag Praxis gegenüber Prüfstand (Taktung, Ventilator, Regelung,
+    # Installation). Wirkt nach der Kalibrierung auf SCOP/SEER, d. h. die
+    # simulierte Saisonzahl liegt um diesen Anteil unter dem Datenblattwert.
+    praxisabschlag: 0.15
     # Maximale Heizleistung relativ zur Nennleistung (°C -> Faktor)
     leistungsfaktor_heizen:
       -15: 0.70
@@ -246,6 +253,11 @@ annahmen:
       brennstoff_volatilitaet: 0.20
       korrelation: 0.6
       co2_aufschlag_eur_t: 0
+
+  # Plausibilitätsbereiche; Abweichungen werden als Warnung geloggt
+  plausibilitaet:
+    # Realistische Jahresarbeitszahl Heizen für Luft-Luft-Geräte
+    jaz_heizen: [2.5, 4.5]
 
   # Streuung im Monte-Carlo
   verhalten:

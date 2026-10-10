@@ -23,7 +23,7 @@ import numpy as np
 from scipy.optimize import brentq
 
 from engine.inputs import Konfiguration, lade_konfiguration
-from engine.simulation import Jahresergebnis, simuliere_jahr
+from engine.simulation import Jahresergebnis, Jahressummen, simuliere_jahr
 from engine.weather import lade_wetterjahre, synthetisches_wetterjahr
 
 
@@ -64,38 +64,34 @@ def deterministischer_preispfad(konfig: Konfiguration) -> Preispfad:
 
 @dataclass(frozen=True)
 class Jahreskosten:
-    strom: float
+    strom: float | np.ndarray
     """Netzbezug × Preis − Einspeisung × Vergütung"""
-    brennstoff: float
+    brennstoff: float | np.ndarray
     wartung: float
 
     @property
-    def gesamt(self) -> float:
+    def gesamt(self) -> float | np.ndarray:
         return self.strom + self.brennstoff + self.wartung
 
 
 def jahreskosten(
-    ergebnis: Jahresergebnis,
-    strompreis: float,
-    brennstoffpreis: float,
-    einspeiseverguetung: float,
+    summen: Jahressummen,
+    strompreis,
+    brennstoffpreis,
+    einspeiseverguetung,
     wartung: float = 0.0,
 ) -> Jahreskosten:
-    b = ergebnis.bilanz
+    """Kosten eines Jahres; funktioniert mit Skalaren und (broadcastbaren) Arrays."""
     return Jahreskosten(
-        strom=float(b.netzbezug.sum() * strompreis - b.einspeisung.sum() * einspeiseverguetung),
-        brennstoff=ergebnis.brennstoff_kwh * brennstoffpreis,
+        strom=summen.netzbezug * strompreis - summen.einspeisung * einspeiseverguetung,
+        brennstoff=summen.brennstoff * brennstoffpreis,
         wartung=wartung,
     )
 
 
-def kuehlkosten(ergebnis: Jahresergebnis, strompreis: float) -> float:
+def kuehlkosten(summen: Jahressummen, strompreis):
     """Netzstromkosten des Kühlens (Kühlstrom anteilig am Netzbezug je Stunde)."""
-    b = ergebnis.bilanz
-    anteil = np.divide(
-        ergebnis.split_strom_kuehlen, b.last, out=np.zeros_like(b.last), where=b.last > 0
-    )
-    return float((anteil * b.netzbezug).sum() * strompreis)
+    return summen.kuehlstrom_netz * strompreis
 
 
 def barwert(investition: float, cashflows: np.ndarray, zins: float) -> float:
@@ -201,7 +197,8 @@ def bewerte(
 
     kosten_ref, kosten_var, kuehl = [], [], []
     for t in range(preise.jahre):
-        ref, var = referenz[t % len(referenz)], variante[t % len(variante)]
+        ref = referenz[t % len(referenz)].summen()
+        var = variante[t % len(variante)].summen()
         p = (preise.strom[t], preise.brennstoff[t], preise.einspeisung[t])
         kosten_ref.append(jahreskosten(ref, *p))
         kosten_var.append(jahreskosten(var, *p, wartung=e.kosten.wartung_eur_jahr))

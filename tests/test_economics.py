@@ -54,7 +54,7 @@ def test_amortisation():
 
 def test_jahreskosten_aus_bilanz(konfig, wetter):
     ergebnis = simuliere_jahr(konfig, wetter, mit_split=True)
-    k = jahreskosten(ergebnis, 0.30, 0.10, 0.08, wartung=150)
+    k = jahreskosten(ergebnis.summen(), 0.30, 0.10, 0.08, wartung=150)
     b = ergebnis.bilanz
     assert k.strom == pytest.approx(b.netzbezug.sum() * 0.30 - b.einspeisung.sum() * 0.08)
     assert k.brennstoff == pytest.approx(ergebnis.brennstoff_kwh * 0.10)
@@ -92,7 +92,9 @@ def test_kuehlen_kostet(wetter):
     assert w_mit.kuehlkosten.sum() > 0
     # ohne PV ist der Kühlstrom komplett Netzbezug: Ersparnis sinkt genau um die Kühlkosten
     np.testing.assert_allclose(w_ohne.ersparnis - w_mit.ersparnis, w_mit.kuehlkosten, rtol=1e-9)
-    assert kuehlkosten(mit[0], 0.35) == pytest.approx(mit[0].split_strom_kuehlen.sum() * 0.35)
+    assert kuehlkosten(mit[0].summen(), 0.35) == pytest.approx(
+        mit[0].split_strom_kuehlen.sum() * 0.35
+    )
 
 
 def test_hoehere_brennstoffpreise_verbessern_ergebnis(wetter):
