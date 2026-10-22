@@ -1,1 +1,4 @@
+# Pakete stehen in pyproject.toml. Streamlit Community Cloud installiert nur neu,
+# wenn sich diese Datei ändert: nach Änderungen an pyproject.toml das Datum anpassen.
+# Stand: 2026-10-22
 .[app]
