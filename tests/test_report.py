@@ -50,6 +50,8 @@ def test_bericht_enthaelt_kernaussagen_und_hinweis(bericht):
         assert aussage in text
     assert " ".join(HAFTUNG.split()) in text
     assert "Schätzung, keine Garantie." in text
+    assert "Barwert" not in text
+    assert "Zinsfuß" not in text
 
 
 def test_eingabezeilen_ohne_pv_und_speicher():

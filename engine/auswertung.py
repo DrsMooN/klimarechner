@@ -7,7 +7,7 @@ repräsentativen Wetterjahrs.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from datetime import date, timedelta
 
 import numpy as np
@@ -36,10 +36,6 @@ def prozent(anteil: float) -> str:
     return f"{zahl(anteil * 100)} %"
 
 
-def jahre(wert: float) -> str:
-    return f"{zahl(wert, 1)} Jahren" if wert != 1 else "1 Jahr"
-
-
 def kernaussagen(ergebnis: MonteCarloErgebnis, konfig: Konfiguration) -> list[str]:
     """Drei bis vier Kernaussagen in Klartext für Kopfzeile und Bericht."""
     e = konfig.eingaben
@@ -47,24 +43,12 @@ def kernaussagen(ergebnis: MonteCarloErgebnis, konfig: Konfiguration) -> list[st
     zeitraum = e.rahmen.betrachtungszeitraum_jahre
     aussagen = []
 
-    w = ergebnis.wahrscheinlichkeit_amortisation
-    amort = k["amortisation_jahre"]
-    if w >= 0.8:
-        aussagen.append(
-            f"Amortisation mit 80 % Wahrscheinlichkeit nach {zahl(amort[10], 1)} bis "
-            f"{jahre(amort[90])}, im mittleren Fall nach {jahre(amort[50])}."
-        )
-    elif w > 0:
-        mitte = f" Im mittleren Fall nach {jahre(amort[50])}." if np.isfinite(amort[50]) else ""
-        aussagen.append(
-            f"Die Investition amortisiert sich innerhalb von {zeitraum} Jahren in "
-            f"{prozent(w)} der berechneten Fälle.{mitte}"
-        )
-    else:
-        aussagen.append(
-            f"Innerhalb von {zeitraum} Jahren amortisiert sich die Investition in keinem "
-            "der berechneten Fälle."
-        )
+    summe = k["ersparnis_summe_eur"]
+    aussagen.append(
+        f"Ersparnis über {zeitraum} Jahre: {euro(summe[10])} bis {euro(summe[90])}, "
+        f"im mittleren Fall {euro(summe[50])} bei einer Investition von "
+        f"{euro(ergebnis.investition)}."
+    )
 
     ersparnis = k["ersparnis_jahr1_eur"]
     aussagen.append(
@@ -89,7 +73,9 @@ def kernaussagen(ergebnis: MonteCarloErgebnis, konfig: Konfiguration) -> list[st
 KENNZAHLEN_BESCHRIFTUNG = {
     "barwert_eur": ("Barwert", "€"),
     "interner_zinsfuss": ("Interner Zinsfuß", "%"),
-    "amortisation_jahre": ("Amortisation", "Jahre"),
+    "ersparnis_summe_eur": ("Ersparnis im Betrachtungszeitraum", "€"),
+    "ersparnis_heizen_summe_eur": ("davon Ersparnis Heizen (nach Wartung)", "€"),
+    "kuehlkosten_summe_eur": ("davon Kühlkosten", "€"),
     "ersparnis_jahr1_eur": ("Ersparnis im 1. Jahr", "€"),
     "kuehlkosten_eur_jahr": ("Kühlkosten pro Jahr", "€"),
     "jaz_heizen": ("Jahresarbeitszahl Heizen", ""),
@@ -116,11 +102,16 @@ def _zelle(wert: float, einheit: str) -> str:
     return zahl(wert)
 
 
-def kennzahlentabelle(ergebnis: MonteCarloErgebnis) -> pd.DataFrame:
-    """Kennzahlen als formatierte Tabelle mit Spalten P10, P50, P90."""
+def kennzahlentabelle(ergebnis: MonteCarloErgebnis, ohne: Collection[str] = ()) -> pd.DataFrame:
+    """Kennzahlen als formatierte Tabelle mit Spalten P10, P50, P90.
+
+    ``ohne``: Schlüssel aus ``KENNZAHLEN_BESCHRIFTUNG``, die weggelassen werden.
+    """
     k = ergebnis.kennzahlen()
     zeilen = []
     for schluessel, (name, einheit) in KENNZAHLEN_BESCHRIFTUNG.items():
+        if schluessel in ohne:
+            continue
         werte = k[schluessel]
         zeilen.append(
             {

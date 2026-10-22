@@ -29,23 +29,9 @@ def test_kernaussagen(mc):
     aussagen = auswertung.kernaussagen(ergebnis, konfig)
     assert 3 <= len(aussagen) <= 4
     assert any("Ersparnis im ersten Jahr" in a for a in aussagen)
-    assert any("amortisiert" in a or "Amortisation" in a for a in aussagen)
-
-
-def test_kernaussage_bei_sicherer_amortisation():
-    konfig = lade_konfiguration(
-        {
-            "eingaben": {
-                "montecarlo": {"pfade": 200, "seed": 3, "parametersaetze": 5},
-                "kosten": {"investition_split_eur": 300, "wartung_eur_jahr": 0},
-            }
-        }
-    )
-    ergebnis = rechne(konfig, WETTER)
-    assert ergebnis.wahrscheinlichkeit_amortisation >= 0.8
-    assert auswertung.kernaussagen(ergebnis, konfig)[0].startswith(
-        "Amortisation mit 80 % Wahrscheinlichkeit"
-    )
+    assert aussagen[0].startswith("Ersparnis über 15 Jahre")
+    assert "Investition von 6.000 €" in aussagen[0]
+    assert not any("mortis" in a for a in aussagen)
 
 
 def test_kennzahlentabelle(mc):
@@ -53,6 +39,8 @@ def test_kennzahlentabelle(mc):
     tabelle = auswertung.kennzahlentabelle(ergebnis)
     assert list(tabelle.columns) == ["P10", "P50", "P90"]
     assert "Barwert" in tabelle.index
+    assert "Ersparnis im Betrachtungszeitraum" in tabelle.index
+    assert not any("Amortisation" in name for name in tabelle.index)
 
 
 def test_repraesentatives_wetterjahr_ist_median(konfig):
@@ -87,8 +75,10 @@ def test_diagramme_lassen_sich_bauen(mc, konfig):
     _, ergebnis = mc
     detail = auswertung.detailjahr(konfig, WETTER)
     for fig in (
-        diagramme.faecher_cashflow(ergebnis),
-        diagramme.histogramm_amortisation(ergebnis),
+        diagramme.faecher_ersparnis(ergebnis),
+        diagramme.faecher_heizen(ergebnis),
+        diagramme.faecher_kuehlen(ergebnis),
+        diagramme.investition_ersparnis(ergebnis),
         diagramme.monatsbilanz(auswertung.monatsbilanz(detail)),
         diagramme.beispielwoche(auswertung.beispielwoche(detail), mit_speicher=True),
     ):

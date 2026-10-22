@@ -116,6 +116,20 @@ def test_kennzahlen_und_perzentile():
     np.testing.assert_allclose(ergebnis.kumulierter_cashflow[:, 0], -6000)
 
 
+def test_ersparnis_zerfaellt_in_heizen_und_kuehlen():
+    ergebnis = rechne(_konfig(), WETTER)
+    assert (ergebnis.kuehlkosten > 0).any()
+    np.testing.assert_allclose(
+        ergebnis.ersparnis_heizen - ergebnis.kuehlkosten, ergebnis.ersparnis, rtol=1e-12
+    )
+    kum = ergebnis.kumuliert(ergebnis.ersparnis)
+    assert kum.shape == (200, 16)
+    np.testing.assert_allclose(kum[:, 0], 0)
+    np.testing.assert_allclose(kum[:, -1], ergebnis.ersparnis.sum(axis=1))
+    k = ergebnis.kennzahlen()
+    assert k["ersparnis_heizen_summe_eur"][50] >= k["ersparnis_summe_eur"][50]
+
+
 def test_amortisation_wird_wahrscheinlicher_mit_kleiner_investition():
     teuer = rechne(_konfig(), WETTER)
     guenstig = rechne(

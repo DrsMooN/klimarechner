@@ -104,8 +104,8 @@ def _png(fig: plt.Figure) -> io.BytesIO:
     return puffer
 
 
-def diagramm_cashflow(ergebnis: MonteCarloErgebnis) -> io.BytesIO:
-    kum = ergebnis.kumulierter_cashflow
+def diagramm_ersparnis(ergebnis: MonteCarloErgebnis) -> io.BytesIO:
+    kum = ergebnis.kumuliert(ergebnis.ersparnis)
     jahre = np.arange(kum.shape[1])
     p10, p50, p90 = (np.percentile(kum, q, axis=0) for q in (10, 50, 90))
     fig, ax = plt.subplots(figsize=(6.4, 2.6))
@@ -117,7 +117,7 @@ def diagramm_cashflow(ergebnis: MonteCarloErgebnis) -> io.BytesIO:
     ax.yaxis.set_major_formatter(FuncFormatter(_euro_achse))
     ax.set_xlim(0, jahre[-1])
     ax.set_xlabel("Jahr", fontsize=8, color=TEXT_2)
-    _stil(ax, "Kumulierter Cashflow", "€")
+    _stil(ax, "Kumulierte Ersparnis", "€")
     _legende(ax)
     return _png(fig)
 
@@ -261,8 +261,8 @@ def annahmen_text(konfig: Konfiguration, ergebnis: MonteCarloErgebnis, wetterjah
     z = auswertung.zahl
     s = konfig.preisszenario
     return (
-        f"Betrachtungszeitraum {e.rahmen.betrachtungszeitraum_jahre} Jahre, Kalkulationszins "
-        f"{z(e.rahmen.kalkulationszins * 100, 1)} %. Preisentwicklung „{e.preise.szenario}“: "
+        f"Betrachtungszeitraum {e.rahmen.betrachtungszeitraum_jahre} Jahre. "
+        f"Preisentwicklung „{e.preise.szenario}“: "
         f"Strom im Mittel {z(s.strom_drift * 100, 1)} % pro Jahr, Brennstoff "
         f"{z(s.brennstoff_drift * 100, 1)} % pro Jahr, mit Schwankungen. Stündliche "
         f"Simulation über {wetterjahre} Wetterjahre, {z(ergebnis.pfade)} berechnete Fälle "
@@ -311,7 +311,7 @@ def erstelle_bericht(
         _tabelle(eingabezeilen(konfig), [32, breite / mm - 32], kopf=False),
     ]
 
-    kennzahlen = auswertung.kennzahlentabelle(ergebnis)
+    kennzahlen = auswertung.kennzahlentabelle(ergebnis, ohne=("barwert_eur", "interner_zinsfuss"))
     zeilen = [["", "ungünstig (P10)", "mittel (P50)", "günstig (P90)"]]
     zeilen += [
         [name, *werte]
@@ -333,13 +333,13 @@ def erstelle_bericht(
     ]
 
     bild_breite = breite
-    cashflow = diagramm_cashflow(ergebnis)
+    ersparnis = diagramm_ersparnis(ergebnis)
     monat = diagramm_monatsbilanz(auswertung.monatsbilanz(detail))
     inhalt += [
         KeepTogether(
             [
                 Paragraph("Verlauf und Energiebilanz", st["h2"]),
-                Image(cashflow, width=bild_breite, height=bild_breite * 2.6 / 6.4 * 1.08),
+                Image(ersparnis, width=bild_breite, height=bild_breite * 2.6 / 6.4 * 1.08),
                 Spacer(1, 3 * mm),
                 Image(monat, width=bild_breite, height=bild_breite * 2.4 / 6.4 * 1.08),
                 Paragraph(

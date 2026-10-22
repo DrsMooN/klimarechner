@@ -180,6 +180,19 @@ class MonteCarloErgebnis:
         return np.concatenate([start, start + np.cumsum(self.ersparnis, axis=1)], axis=1)
 
     @property
+    def ersparnis_heizen(self) -> np.ndarray:
+        """Ersparnis ohne Kühlkosten (inklusive Wartung), Form ``[n, jahre]``.
+
+        Je Pfad und Jahr gilt ``ersparnis == ersparnis_heizen − kuehlkosten``.
+        """
+        return self.ersparnis + self.kuehlkosten
+
+    @staticmethod
+    def kumuliert(werte: np.ndarray) -> np.ndarray:
+        """Kumulierte Summe ab null, Form ``[n, jahre + 1]``, Spalte 0 = 0."""
+        return np.concatenate([np.zeros((werte.shape[0], 1)), np.cumsum(werte, axis=1)], axis=1)
+
+    @property
     def barwert(self) -> np.ndarray:
         t = np.arange(1, self.ersparnis.shape[1] + 1)
         return -self.investition + (self.ersparnis / (1 + self.zins) ** t).sum(axis=1)
@@ -224,6 +237,9 @@ class MonteCarloErgebnis:
             "amortisation_jahre": p(self.amortisation_jahre),
             "wahrscheinlichkeit_amortisation": self.wahrscheinlichkeit_amortisation,
             "ersparnis_jahr1_eur": p(self.ersparnis[:, 0]),
+            "ersparnis_summe_eur": p(self.ersparnis.sum(axis=1)),
+            "ersparnis_heizen_summe_eur": p(self.ersparnis_heizen.sum(axis=1)),
+            "kuehlkosten_summe_eur": p(self.kuehlkosten.sum(axis=1)),
             "kuehlkosten_eur_jahr": p(self.kuehlkosten.mean(axis=1)),
             "jaz_heizen": p(v.jaz_heizen),
             "pv_anteil_split_heizen": p(v.pv_anteil_split_heizen),

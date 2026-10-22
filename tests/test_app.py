@@ -34,7 +34,7 @@ def test_app_rechnet_mit_synthetischem_wetter():
     assert at.header[0].value == "Ergebnis"
     texte = " ".join(m.value for m in at.markdown)
     assert "Ersparnis im ersten Jahr" in texte
-    assert len(at.metric) == 4
+    assert [m.label for m in at.metric] == ["Investition", "Ersparnis (P50)", "JAZ Heizen"]
     knopf = at.get("download_button")
     assert len(knopf) == 1
     assert knopf[0].proto.label == "PDF-Bericht herunterladen"

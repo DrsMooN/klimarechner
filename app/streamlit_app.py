@@ -370,25 +370,39 @@ def ergebnisseite(konfig: Konfiguration, ergebnis, detail, wetter: list[Wetterja
         st.warning(warnung)
 
     k = ergebnis.kennzahlen()
-    m1, m2, m3, m4 = st.columns(4)
-    amort = k["amortisation_jahre"][50]
-    m1.metric(
-        "Amortisation (mittlerer Fall)",
-        f"{auswertung.zahl(amort, 1)} Jahre" if amort != float("inf") else "nicht erreicht",
+    zeitraum = konfig.eingaben.rahmen.betrachtungszeitraum_jahre
+    summe = k["ersparnis_summe_eur"][50]
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Investition", auswertung.euro(ergebnis.investition))
+    m2.metric(
+        "Ersparnis (P50)",
+        auswertung.euro(summe),
+        help=f"Summe über {zeitraum} Jahre, nicht abgezinst",
     )
-    m2.metric("Ersparnis im 1. Jahr (P50)", auswertung.euro(k["ersparnis_jahr1_eur"][50]))
-    m3.metric("Barwert (P50)", auswertung.euro(k["barwert_eur"][50]))
-    m4.metric("Jahresarbeitszahl Heizen", auswertung.zahl(k["jaz_heizen"][50], 1))
+    m3.metric(
+        "JAZ Heizen",
+        auswertung.zahl(k["jaz_heizen"][50], 1),
+        help="Jahresarbeitszahl des Split-Geräts im Heizbetrieb",
+    )
 
     g1, g2 = st.columns(2)
-    g1.plotly_chart(diagramme.faecher_cashflow(ergebnis), width="stretch")
-    g2.plotly_chart(diagramme.histogramm_amortisation(ergebnis), width="stretch")
+    g1.plotly_chart(diagramme.faecher_ersparnis(ergebnis), width="stretch")
+    g2.plotly_chart(diagramme.investition_ersparnis(ergebnis), width="stretch")
+    g3, g4 = st.columns(2)
+    g3.plotly_chart(diagramme.faecher_heizen(ergebnis), width="stretch")
+    g4.plotly_chart(diagramme.faecher_kuehlen(ergebnis), width="stretch")
+    st.caption(
+        "Ersparnis gesamt = Ersparnis Heizen − Kosten Kühlen; das gilt für jeden berechneten "
+        "Fall. Die Bandbreiten werden je Diagramm getrennt ermittelt, deshalb addieren sich "
+        "die P50-Linien nur näherungsweise. Die Wartung ist in der Ersparnis Heizen enthalten. "
+        "Beträge nicht abgezinst."
+    )
 
     monat = auswertung.monatsbilanz(detail)
     woche = auswertung.beispielwoche(detail)
-    g3, g4 = st.columns(2)
-    g3.plotly_chart(diagramme.monatsbilanz(monat), width="stretch")
-    g4.plotly_chart(diagramme.beispielwoche(woche, konfig.eingaben.speicher.aktiv), width="stretch")
+    g5, g6 = st.columns(2)
+    g5.plotly_chart(diagramme.monatsbilanz(monat), width="stretch")
+    g6.plotly_chart(diagramme.beispielwoche(woche, konfig.eingaben.speicher.aktiv), width="stretch")
     st.caption(
         f"Monatsbilanz und Beispielwoche: Wetterjahr {detail.wetterjahr} "
         "(mittlerer Heizbedarf), Eingabewerte ohne Streuung. "
